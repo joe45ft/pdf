@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مكتبة الملفات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Markazi+Text:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1E24;
+    --ink-soft:#666E7A;
+    --ink-faint:#9AA1AC;
+    --paper:#F6F4EF;
+    --surface:#FFFFFF;
+    --line:#E6E2D8;
+    --navy:#1F3A5F;
+    --navy-deep:#122238;
+    --gold:#AD8749;
+    --gold-soft:#F3ECDC;
+    --radius:16px;
+    --shadow:0 2px 4px rgba(28,32,39,.03), 0 14px 34px -16px rgba(28,32,39,.18);
+    --shadow-lift:0 6px 10px rgba(28,32,39,.05), 0 24px 48px -18px rgba(28,32,39,.22);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    background:
+      radial-gradient(1100px 480px at 88% -10%, rgba(31,58,95,.05), transparent 60%),
+      radial-gradient(900px 420px at 5% 0%, rgba(173,135,73,.07), transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--gold-soft); color:var(--navy-deep);}
+  :focus-visible{outline:2px solid var(--navy); outline-offset:3px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+
+  /* ---------- Top bar ---------- */
+  header{
+    padding:26px clamp(20px,5vw,72px) 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:11px;
+  }
+  .brand-mark{
+    width:38px; height:38px;
+    border-radius:11px;
+    background:linear-gradient(150deg, var(--navy) 0%, var(--navy-deep) 100%);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    box-shadow:0 4px 12px -4px rgba(18,34,56,.5);
+  }
+  .brand-mark svg{width:19px; height:19px;}
+  .brand-name{
+    font-family:'Markazi Text', serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:.2px;
+    color:var(--navy-deep);
+  }
+
+  nav.crumbs{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:14px;
+    color:var(--ink-faint);
+    flex-wrap:wrap;
+  }
+  nav.crumbs .crumb{
+    cursor:pointer;
+    padding:6px 12px;
+    border-radius:8px;
+    transition:background .15s ease, color .15s ease;
+    white-space:nowrap;
+  }
+  nav.crumbs .crumb:hover{background:var(--surface); color:var(--ink);}
+  nav.crumbs .crumb.current{color:var(--ink); font-weight:600; cursor:default;}
+  nav.crumbs .crumb.current:hover{background:none;}
+  nav.crumbs .sep{color:#D7D2C4; font-size:13px; margin:0 1px;}
+
+  /* ---------- Main ---------- */
+  main{
+    flex:1;
+    padding:8px clamp(20px,5vw,72px) 70px;
+    position:relative;
+    max-width:1180px;
+    width:100%;
+    margin:0 auto;
+  }
+
+  .screen{display:none;}
+  .screen.active{display:block; animation:rise .42s cubic-bezier(.22,.61,.36,1);}
+  @keyframes rise{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .screen-head{
+    margin:26px 0 34px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .screen-title{
+    font-family:'Markazi Text', serif;
+    font-size:clamp(30px,4.2vw,42px);
+    font-weight:700;
+    letter-spacing:.2px;
+    color:var(--navy-deep);
+    line-height:1.15;
+  }
+  .screen-sub{
+    margin-top:8px;
+    color:var(--ink-soft);
+    font-size:15.5px;
+    max-width:46ch;
+  }
+
+  /* ---------- Card grid (batches / subjects) ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+    gap:18px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:0;
+    cursor:pointer;
+    text-align:right;
+    transition:transform .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s ease, border-color .2s ease;
+    position:relative;
+    overflow:hidden;
+    opacity:0;
+    animation:cardIn .5s cubic-bezier(.22,.61,.36,1) forwards;
+  }
+  .grid .card:nth-child(1){animation-delay:.02s;}
+  .grid .card:nth-child(2){animation-delay:.07s;}
+  .grid .card:nth-child(3){animation-delay:.12s;}
+  .grid .card:nth-child(4){animation-delay:.17s;}
+  .grid .card:nth-child(5){animation-delay:.22s;}
+  .grid .card:nth-child(6){animation-delay:.27s;}
+  @keyframes cardIn{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    inset-inline-start:0; top:0; bottom:0;
+    width:3px;
+    background:var(--gold);
+    transform:scaleY(0);
+    transform-origin:top;
+    transition:transform .25s ease;
+  }
+  .card:hover, .card:focus-visible{
+    transform:translateY(-4px);
+    box-shadow:var(--shadow-lift);
+    border-color:#DCD6C6;
+  }
+  .card:hover::before, .card:focus-visible::before{transform:scaleY(1);}
+  .card-inner{padding:24px 22px 22px;}
+  .card .icon{
+    width:42px; height:42px;
+    border-radius:11px;
+    background:var(--gold-soft);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
+  }
+  .card .icon svg{width:20px; height:20px; stroke:var(--navy);}
+  .card .name{
+    font-size:16.5px;
+    font-weight:600;
+    line-height:1.4;
+  }
+  .card .meta{
+    margin-top:6px;
+    font-size:13px;
+    color:var(--ink-faint);
+  }
+
+  /* ---------- File list screen ---------- */
+  .file-count{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .file-count strong{color:var(--navy-deep); font-weight:700;}
+
+  .file-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .file-row{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:16px 20px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    cursor:pointer;
+    transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    opacity:0;
+    animation:cardIn .45s cubic-bezier(.22,.61,.36,1) forwards;
+  }
+  .file-list .file-row:nth-child(1){animation-delay:.02s;}
+  .file-list .file-row:nth-child(2){animation-delay:.06s;}
+  .file-list .file-row:nth-child(3){animation-delay:.10s;}
+  .file-list .file-row:nth-child(4){animation-delay:.14s;}
+  .file-list .file-row:nth-child(5){animation-delay:.18s;}
+  .file-list .file-row:nth-child(6){animation-delay:.22s;}
+  .file-row:hover{border-color:#DCD6C6; box-shadow:var(--shadow); transform:translateX(-2px);}
+  [dir="rtl"] .file-row:hover{transform:translateX(2px);}
+  .file-row .f-icon{
+    width:40px; height:40px;
+    border-radius:10px;
+    background:var(--navy);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    position:relative;
+  }
+  .file-row .f-icon svg{width:17px; height:17px; stroke:#fff;}
+  .file-row .f-tag{
+    position:absolute;
+    bottom:-5px; left:-5px;
+    background:var(--gold);
+    color:#fff;
+    font-size:8px;
+    font-weight:700;
+    letter-spacing:.4px;
+    padding:1.5px 4px;
+    border-radius:4px;
+    line-height:1.4;
+  }
+  .file-row .f-name{
+    font-size:15px;
+    font-weight:500;
+    flex:1;
+  }
+  .file-row .f-open{
+    font-size:13px;
+    color:var(--ink-faint);
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .file-row .f-open svg{width:14px; height:14px;}
+
+  /* empty state */
+  .empty{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--ink-faint);
+  }
+  .empty svg{width:44px; height:44px; stroke:#D7D2C4; margin-bottom:16px;}
+  .empty p{font-size:14.5px;}
+
+  /* ---------- Viewer modal ---------- */
+  .viewer-overlay{
+    position:fixed; inset:0;
+    background:rgba(18,22,29,.6);
+    backdrop-filter:blur(3px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    padding:30px;
+  }
+  .viewer-overlay.active{display:flex; animation:fadeIn .2s ease;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  .viewer-box{
+    background:var(--surface);
+    border-radius:18px;
+    width:min(940px, 100%);
+    height:min(88vh, 800px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 30px 80px -12px rgba(0,0,0,.4);
+    animation:viewerIn .28s cubic-bezier(.22,.61,.36,1);
+  }
+  @keyframes viewerIn{
+    from{opacity:0; transform:scale(.97) translateY(8px);}
+    to{opacity:1; transform:scale(1) translateY(0);}
+  }
+  .viewer-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:15px 20px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface);
+  }
+  .viewer-top .v-title{font-size:15px; font-weight:600;}
+  .v-close{
+    width:32px; height:32px;
+    border-radius:9px;
+    border:none;
+    background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    color:var(--ink-soft);
+    transition:background .15s ease, color .15s ease;
+  }
+  .v-close:hover{background:var(--line); color:var(--ink);}
+  .viewer-body{flex:1; background:#EDEBE4;}
+  .viewer-body iframe{width:100%; height:100%; border:none;}
+
+  footer{
+    padding:22px clamp(20px,5vw,72px) 32px;
+    color:var(--ink-faint);
+    font-size:12.5px;
+    text-align:center;
+  }
+
+  @media (max-width:520px){
+    .screen-head{flex-direction:column; align-items:flex-start;}
+    header{flex-direction:column; align-items:flex-start; gap:12px;}
+    nav.crumbs{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+    </div>
+    <span class="brand-name">مكتبة الملفات</span>
+  </div>
+  <nav class="crumbs" id="crumbs"></nav>
+</header>
+
+<main>
+
+  <!-- شاشة 1: الدفعات -->
+  <section class="screen active" id="screen-batches">
+    <div class="screen-head">
+      <div>
+        <div class="screen-title">اختر الدفعة</div>
+        <div class="screen-sub">حدد دفعتك للوصول إلى المواد الخاصة بها</div>
+      </div>
+    </div>
+    <div class="grid" id="batchGrid"></div>
+  </section>
+
+  <!-- شاشة 2: المواد -->
+  <section class="screen" id="screen-subjects">
+    <div class="screen-head">
+      <div>
+        <div class="screen-title" id="subjectsTitle">المواد</div>
+        <div class="screen-sub">اختر المادة لعرض الملفات المتاحة</div>
+      </div>
+    </div>
+    <div class="grid" id="subjectGrid"></div>
+  </section>
+
+  <!-- شاشة 3: الملفات -->
+  <section class="screen" id="screen-files">
+    <div class="screen-head">
+      <div>
+        <div class="screen-title" id="filesTitle">الملفات</div>
+      </div>
+      <div class="file-count" id="fileCount"></div>
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </section>
+
+</main>
+
+<footer>عرض فقط — الملفات محفوظة على Google Drive</footer>
+
+<!-- Viewer -->
+<div class="viewer-overlay" id="viewerOverlay">
+  <div class="viewer-box">
+    <div class="viewer-top">
+      <span class="v-title" id="viewerTitle"></span>
+      <button class="v-close" id="viewerClose" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="viewer-body">
+      <iframe id="viewerFrame" src="" allow="autoplay"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   البيانات — عدّل هنا فقط لإضافة دفعات/مواد/ملفات جديدة
+   driveId = المعرف الخاص بالملف على Google Drive
+   (الجزء اللي بين /d/ و /view في رابط المشاركة)
+========================================================= */
+const DATA = {
+  batches: [
+    {
+      id: "b2024",
+      name: "دفعة 2024",
+      subjects: [
+        {
+          id: "mis",
+          name: "نظم المعلومات الإدارية",
+          files: [
+            { name: "المحاضرة الأولى - مقدمة", driveId: "REPLACE_WITH_FILE_ID_1" },
+            { name: "المحاضرة الثانية - قواعد البيانات", driveId: "REPLACE_WITH_FILE_ID_2" },
+            { name: "ملخص المراجعة النهائية", driveId: "REPLACE_WITH_FILE_ID_3" }
+          ]
+        },
+        {
+          id: "acc-sci",
+          name: "العلوم الإكتوارية",
+          files: [
+            { name: "الفصل الأول - الاحتمالات", driveId: "REPLACE_WITH_FILE_ID_4" },
+            { name: "الفصل الثاني - جداول الحياة", driveId: "REPLACE_WITH_FILE_ID_5" }
+          ]
+        },
+        {
+          id: "hr",
+          name: "إدارة الموارد البشرية",
+          files: []
+        }
+      ]
+    },
+    {
+      id: "b2025",
+      name: "دفعة 2025",
+      subjects: [
+        {
+          id: "finance",
+          name: "التمويل والرياضيات المالية",
+          files: [
+            { name: "محاضرة القيمة الزمنية للنقود", driveId: "REPLACE_WITH_FILE_ID_6" }
+          ]
+        },
+        {
+          id: "supply",
+          name: "سلاسل الإمداد",
+          files: [
+            { name: "مقدمة في إدارة سلاسل الإمداد", driveId: "REPLACE_WITH_FILE_ID_7" },
+            { name: "دراسة حالة - التوزيع", driveId: "REPLACE_WITH_FILE_ID_8" }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+/* ========================================================= */
+
+let state = { batch: null, subject: null };
+
+const el = (sel) => document.querySelector(sel);
+const crumbsEl = el("#crumbs");
+
+function iconFolder(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`;
+}
+function iconBook(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+}
+function iconFile(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
+}
+function iconEye(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  el("#"+id).classList.add("active");
+}
+
+function renderCrumbs(){
+  let parts = [{label:"الدفعات", action:() => goBatches()}];
+  if(state.batch) parts.push({label: state.batch.name, action: () => goSubjects(state.batch.id)});
+  if(state.subject) parts.push({label: state.subject.name, action: null});
+
+  crumbsEl.innerHTML = parts.map((p, i) => {
+    const isLast = i === parts.length - 1;
+    const sep = i > 0 ? `<span class="sep">/</span>` : "";
+    return `${sep}<span class="crumb ${isLast ? "current" : ""}" data-i="${i}">${p.label}</span>`;
+  }).join("");
+
+  crumbsEl.querySelectorAll(".crumb").forEach((elm, i) => {
+    elm.addEventListener("click", () => { if(parts[i].action) parts[i].action(); });
+  });
+}
+
+function goBatches(){
+  state.batch = null; state.subject = null;
+  renderCrumbs();
+  showScreen("screen-batches");
+}
+
+function goSubjects(batchId){
+  const batch = DATA.batches.find(b => b.id === batchId);
+  state.batch = batch; state.subject = null;
+  renderCrumbs();
+  el("#subjectsTitle").textContent = batch.name;
+  const grid = el("#subjectGrid");
+  grid.innerHTML = batch.subjects.map(s => `
+    <div class="card" tabindex="0" data-id="${s.id}">
+      <div class="card-inner">
+        <div class="icon">${iconBook()}</div>
+        <div class="name">${s.name}</div>
+        <div class="meta">${s.files.length} ملف</div>
+      </div>
+    </div>
+  `).join("");
+  grid.querySelectorAll(".card").forEach(c => {
+    c.addEventListener("click", () => goFiles(c.dataset.id));
+    c.addEventListener("keydown", e => { if(e.key === "Enter") goFiles(c.dataset.id); });
+  });
+  showScreen("screen-subjects");
+}
+
+function goFiles(subjectId){
+  const subject = state.batch.subjects.find(s => s.id === subjectId);
+  state.subject = subject;
+  renderCrumbs();
+  el("#filesTitle").textContent = subject.name;
+  el("#fileCount").innerHTML = `<strong>${subject.files.length}</strong> ملف متاح`;
+
+  const list = el("#fileList");
+  if(subject.files.length === 0){
+    list.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        <p>لا توجد ملفات مضافة لهذه المادة بعد</p>
+      </div>`;
+  } else {
+    list.innerHTML = subject.files.map((f, i) => `
+      <div class="file-row" tabindex="0" data-i="${i}">
+        <div class="f-icon">${iconFile()}<span class="f-tag">PDF</span></div>
+        <div class="f-name">${f.name}</div>
+        <div class="f-open">${iconEye()}عرض</div>
+      </div>
+    `).join("");
+    list.querySelectorAll(".file-row").forEach(r => {
+      r.addEventListener("click", () => openViewer(subject.files[r.dataset.i]));
+      r.addEventListener("keydown", e => { if(e.key === "Enter") openViewer(subject.files[r.dataset.i]); });
+    });
+  }
+  showScreen("screen-files");
+}
+
+function renderBatches(){
+  const grid = el("#batchGrid");
+  grid.innerHTML = DATA.batches.map(b => `
+    <div class="card" tabindex="0" data-id="${b.id}">
+      <div class="card-inner">
+        <div class="icon">${iconFolder()}</div>
+        <div class="name">${b.name}</div>
+        <div class="meta">${b.subjects.length} مادة</div>
+      </div>
+    </div>
+  `).join("");
+  grid.querySelectorAll(".card").forEach(c => {
+    c.addEventListener("click", () => goSubjects(c.dataset.id));
+    c.addEventListener("keydown", e => { if(e.key === "Enter") goSubjects(c.dataset.id); });
+  });
+}
+
+/* ---------- Viewer ---------- */
+const overlay = el("#viewerOverlay");
+const frame = el("#viewerFrame");
+function openViewer(file){
+  el("#viewerTitle").textContent = file.name;
+  frame.src = `https://drive.google.com/file/d/${file.driveId}/preview`;
+  overlay.classList.add("active");
+}
+function closeViewer(){
+  overlay.classList.remove("active");
+  frame.src = "";
+}
+el("#viewerClose").addEventListener("click", closeViewer);
+overlay.addEventListener("click", (e) => { if(e.target === overlay) closeViewer(); });
+document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeViewer(); });
+
+/* ---------- init ---------- */
+renderBatches();
+renderCrumbs();
+</script>
+
+</body>
+</html>
