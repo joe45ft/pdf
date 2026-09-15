@@ -222,12 +222,11 @@
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:13px;
-    padding:16px 20px;
+    padding:16px 18px;
     display:flex;
     align-items:center;
     gap:15px;
-    cursor:pointer;
-    transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    transition:border-color .18s ease, box-shadow .18s ease;
     opacity:0;
     animation:cardIn .45s cubic-bezier(.22,.61,.36,1) forwards;
   }
@@ -237,8 +236,7 @@
   .file-list .file-row:nth-child(4){animation-delay:.14s;}
   .file-list .file-row:nth-child(5){animation-delay:.18s;}
   .file-list .file-row:nth-child(6){animation-delay:.22s;}
-  .file-row:hover{border-color:#DCD6C6; box-shadow:var(--shadow); transform:translateX(-2px);}
-  [dir="rtl"] .file-row:hover{transform:translateX(2px);}
+  .file-row:hover{border-color:#DCD6C6; box-shadow:var(--shadow);}
   .file-row .f-icon{
     width:40px; height:40px;
     border-radius:10px;
@@ -260,19 +258,62 @@
     border-radius:4px;
     line-height:1.4;
   }
+  .file-row .f-body{flex:1; min-width:0;}
   .file-row .f-name{
     font-size:15px;
     font-weight:500;
-    flex:1;
+    line-height:1.4;
   }
-  .file-row .f-open{
-    font-size:13px;
+  .file-row .f-meta{
+    margin-top:3px;
+    font-size:12px;
     color:var(--ink-faint);
+  }
+
+  .f-actions{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    flex-shrink:0;
+  }
+  .f-btn{
     display:flex;
     align-items:center;
-    gap:5px;
+    justify-content:center;
+    gap:6px;
+    font-family:inherit;
+    font-size:12.5px;
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, color .15s ease, border-color .15s ease, transform .12s ease;
+    border:1px solid transparent;
   }
-  .file-row .f-open svg{width:14px; height:14px;}
+  .f-btn svg{width:13px; height:13px; flex-shrink:0;}
+  .f-btn:active{transform:scale(.97);}
+  .f-btn.view{
+    background:var(--navy);
+    color:#fff;
+  }
+  .f-btn.view:hover{background:var(--navy-deep);}
+  .f-btn.attach{
+    background:transparent;
+    border-color:var(--line);
+    color:var(--ink-soft);
+  }
+  .f-btn.attach:hover{border-color:var(--gold); color:var(--navy-deep); background:var(--gold-soft);}
+  .f-btn.attach .a-badge{
+    background:var(--gold);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    width:16px; height:16px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
 
   /* empty state */
   .empty{
@@ -283,8 +324,8 @@
   .empty svg{width:44px; height:44px; stroke:#D7D2C4; margin-bottom:16px;}
   .empty p{font-size:14.5px;}
 
-  /* ---------- Viewer modal ---------- */
-  .viewer-overlay{
+  /* ---------- Viewer / attachments modal ---------- */
+  .overlay{
     position:fixed; inset:0;
     background:rgba(18,22,29,.6);
     backdrop-filter:blur(3px);
@@ -294,33 +335,35 @@
     z-index:50;
     padding:30px;
   }
-  .viewer-overlay.active{display:flex; animation:fadeIn .2s ease;}
+  .overlay.active{display:flex; animation:fadeIn .2s ease;}
   @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
-  .viewer-box{
+  .modal-box{
     background:var(--surface);
     border-radius:18px;
     width:min(940px, 100%);
-    height:min(88vh, 800px);
     display:flex;
     flex-direction:column;
     overflow:hidden;
     box-shadow:0 30px 80px -12px rgba(0,0,0,.4);
     animation:viewerIn .28s cubic-bezier(.22,.61,.36,1);
   }
+  #viewerOverlay .modal-box{height:min(88vh, 800px);}
+  #attachOverlay .modal-box{max-height:min(80vh, 640px);}
   @keyframes viewerIn{
     from{opacity:0; transform:scale(.97) translateY(8px);}
     to{opacity:1; transform:scale(1) translateY(0);}
   }
-  .viewer-top{
+  .modal-top{
     display:flex;
     align-items:center;
     justify-content:space-between;
     padding:15px 20px;
     border-bottom:1px solid var(--line);
     background:var(--surface);
+    flex-shrink:0;
   }
-  .viewer-top .v-title{font-size:15px; font-weight:600;}
-  .v-close{
+  .modal-top .m-title{font-size:15px; font-weight:600;}
+  .m-close{
     width:32px; height:32px;
     border-radius:9px;
     border:none;
@@ -329,10 +372,62 @@
     cursor:pointer;
     color:var(--ink-soft);
     transition:background .15s ease, color .15s ease;
+    flex-shrink:0;
   }
-  .v-close:hover{background:var(--line); color:var(--ink);}
+  .m-close:hover{background:var(--line); color:var(--ink);}
   .viewer-body{flex:1; background:#EDEBE4;}
   .viewer-body iframe{width:100%; height:100%; border:none;}
+
+  .attach-body{
+    padding:16px 20px 20px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .attach-row{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:13px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .attach-row .a-name{
+    font-size:14px;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  .attach-row .a-name .a-icon{
+    width:30px; height:30px;
+    border-radius:8px;
+    background:var(--gold-soft);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .attach-row .a-name .a-icon svg{width:14px; height:14px; stroke:var(--gold);}
+  .attach-row .a-name span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .attach-row a.a-download{
+    font-size:13px;
+    color:var(--navy);
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    text-decoration:none;
+    padding:7px 13px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    flex-shrink:0;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .attach-row a.a-download:hover{background:var(--gold-soft); border-color:var(--gold);}
+  .attach-row a.a-download svg{width:14px; height:14px;}
 
   footer{
     padding:22px clamp(20px,5vw,72px) 32px;
@@ -341,10 +436,12 @@
     text-align:center;
   }
 
-  @media (max-width:520px){
+  @media (max-width:560px){
     .screen-head{flex-direction:column; align-items:flex-start;}
     header{flex-direction:column; align-items:flex-start; gap:12px;}
     nav.crumbs{width:100%;}
+    .file-row{align-items:flex-start;}
+    .f-btn{font-size:12px; padding:6px 11px;}
   }
 </style>
 </head>
@@ -397,14 +494,14 @@
 
 </main>
 
-<footer>عرض فقط — الملفات محفوظة على Google Drive</footer>
+<footer>عرض PDF مباشر — وتحميل الملفات الإضافية عند توفرها</footer>
 
-<!-- Viewer -->
-<div class="viewer-overlay" id="viewerOverlay">
-  <div class="viewer-box">
-    <div class="viewer-top">
-      <span class="v-title" id="viewerTitle"></span>
-      <button class="v-close" id="viewerClose" aria-label="إغلاق">
+<!-- PDF Viewer -->
+<div class="overlay" id="viewerOverlay">
+  <div class="modal-box">
+    <div class="modal-top">
+      <span class="m-title" id="viewerTitle"></span>
+      <button class="m-close" id="viewerClose" aria-label="إغلاق">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
@@ -414,11 +511,27 @@
   </div>
 </div>
 
+<!-- الملفات الإضافية -->
+<div class="overlay" id="attachOverlay">
+  <div class="modal-box">
+    <div class="modal-top">
+      <span class="m-title" id="attachTitle">الملفات الإضافية</span>
+      <button class="m-close" id="attachClose" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="attach-body" id="attachList"></div>
+  </div>
+</div>
+
 <script>
 /* =========================================================
    البيانات — عدّل هنا فقط لإضافة دفعات/مواد/ملفات جديدة
    driveId = المعرف الخاص بالملف على Google Drive
    (الجزء اللي بين /d/ و /view في رابط المشاركة)
+
+   attachments (اختياري): ملفات إضافية مرتبطة بنفس الملف
+   (حل، ملخص، بيانات إضافية...) — كل عنصر بردو محتاج driveId
 ========================================================= */
 const DATA = {
   batches: [
@@ -430,7 +543,14 @@ const DATA = {
           id: "mis",
           name: "نظم المعلومات الإدارية",
           files: [
-            { name: "المحاضرة الأولى - مقدمة", driveId: "REPLACE_WITH_FILE_ID_1" },
+            {
+              name: "المحاضرة الأولى - مقدمة",
+              driveId: "REPLACE_WITH_FILE_ID_1",
+              attachments: [
+                { name: "شيت التمارين", driveId: "REPLACE_WITH_ATTACH_ID_1" },
+                { name: "حل التمارين", driveId: "REPLACE_WITH_ATTACH_ID_2" }
+              ]
+            },
             { name: "المحاضرة الثانية - قواعد البيانات", driveId: "REPLACE_WITH_FILE_ID_2" },
             { name: "ملخص المراجعة النهائية", driveId: "REPLACE_WITH_FILE_ID_3" }
           ]
@@ -492,6 +612,12 @@ function iconFile(){
 }
 function iconEye(){
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+function iconPaperclip(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.05 12.53 19.9a5 5 0 0 1-7.07-7.07l8.5-8.5a3.5 3.5 0 0 1 4.95 4.95l-8.5 8.5a2 2 0 1 1-2.83-2.83l7.79-7.79"/></svg>`;
+}
+function iconDownload(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>`;
 }
 
 function showScreen(id){
@@ -558,16 +684,27 @@ function goFiles(subjectId){
         <p>لا توجد ملفات مضافة لهذه المادة بعد</p>
       </div>`;
   } else {
-    list.innerHTML = subject.files.map((f, i) => `
-      <div class="file-row" tabindex="0" data-i="${i}">
+    list.innerHTML = subject.files.map((f, i) => {
+      const hasAttach = f.attachments && f.attachments.length > 0;
+      return `
+      <div class="file-row" data-i="${i}">
         <div class="f-icon">${iconFile()}<span class="f-tag">PDF</span></div>
-        <div class="f-name">${f.name}</div>
-        <div class="f-open">${iconEye()}عرض</div>
-      </div>
-    `).join("");
-    list.querySelectorAll(".file-row").forEach(r => {
-      r.addEventListener("click", () => openViewer(subject.files[r.dataset.i]));
-      r.addEventListener("keydown", e => { if(e.key === "Enter") openViewer(subject.files[r.dataset.i]); });
+        <div class="f-body">
+          <div class="f-name">${f.name}</div>
+          ${hasAttach ? `<div class="f-meta">${f.attachments.length} ملف إضافي مرفق</div>` : ``}
+        </div>
+        <div class="f-actions">
+          <button class="f-btn view" data-view="${i}">${iconEye()}عرض</button>
+          ${hasAttach ? `<button class="f-btn attach" data-attach="${i}"><span class="a-badge">${f.attachments.length}</span>${iconPaperclip()}تحميل</button>` : ``}
+        </div>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll("[data-view]").forEach(btn => {
+      btn.addEventListener("click", () => openViewer(subject.files[btn.dataset.view]));
+    });
+    list.querySelectorAll("[data-attach]").forEach(btn => {
+      btn.addEventListener("click", () => openAttachments(subject.files[btn.dataset.attach]));
     });
   }
   showScreen("screen-files");
@@ -590,21 +727,47 @@ function renderBatches(){
   });
 }
 
-/* ---------- Viewer ---------- */
-const overlay = el("#viewerOverlay");
+/* ---------- PDF Viewer ---------- */
+const viewerOverlay = el("#viewerOverlay");
 const frame = el("#viewerFrame");
 function openViewer(file){
   el("#viewerTitle").textContent = file.name;
   frame.src = `https://drive.google.com/file/d/${file.driveId}/preview`;
-  overlay.classList.add("active");
+  viewerOverlay.classList.add("active");
 }
 function closeViewer(){
-  overlay.classList.remove("active");
+  viewerOverlay.classList.remove("active");
   frame.src = "";
 }
 el("#viewerClose").addEventListener("click", closeViewer);
-overlay.addEventListener("click", (e) => { if(e.target === overlay) closeViewer(); });
-document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeViewer(); });
+viewerOverlay.addEventListener("click", (e) => { if(e.target === viewerOverlay) closeViewer(); });
+
+/* ---------- الملفات الإضافية ---------- */
+const attachOverlay = el("#attachOverlay");
+function openAttachments(file){
+  el("#attachTitle").textContent = `الملفات الإضافية — ${file.name}`;
+  el("#attachList").innerHTML = file.attachments.map(a => `
+    <div class="attach-row">
+      <div class="a-name">
+        <span class="a-icon">${iconFile()}</span>
+        <span>${a.name}</span>
+      </div>
+      <a class="a-download" href="https://drive.google.com/uc?export=download&id=${a.driveId}" target="_blank" rel="noopener">
+        ${iconDownload()}تحميل
+      </a>
+    </div>
+  `).join("");
+  attachOverlay.classList.add("active");
+}
+function closeAttachments(){
+  attachOverlay.classList.remove("active");
+}
+el("#attachClose").addEventListener("click", closeAttachments);
+attachOverlay.addEventListener("click", (e) => { if(e.target === attachOverlay) closeAttachments(); });
+
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape"){ closeViewer(); closeAttachments(); }
+});
 
 /* ---------- init ---------- */
 renderBatches();
